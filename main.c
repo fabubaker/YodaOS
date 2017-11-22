@@ -6,6 +6,8 @@
 #include <tm4c123gh6pm.h>
 #include <sysctl.h>
 
+/* Preemptive tasks below */
+
 void ProgA(void);
 void ProgB(void);
 void ProgC(void);
@@ -54,9 +56,9 @@ void Timer2AHandler()
     }
     else
     {
-        asm("    LDR R0,StackAdd");
-        asm("    LDR R0,[R0] ");
-        asm("    STR R13,[R0,#4]");
+        asm("  LDR R0,StackAdd");
+        asm("  LDR R0,[R0] ");
+        asm("  STR R13,[R0,#4]");
         RunPtr = RunPtr->next;
         asm("  LDR R0,StackAdd ");
         asm("  LDR R0,[R0] ");
@@ -81,58 +83,9 @@ void Timer2AInit()
     IntEnable(INT_TIMER2A);
 }
 
-volatile int value = 0;
-volatile int dummy = 0;
-
-/* 
- * Define user tasks below as ProgA, ProgB, ProgC
- */
-
-void ProgA()
-{
-    while(1)
-    {
-        value = value + 1;
-        int i,j;
-        for( i = 0; i <120; i++)
-            for(j = 0; j <1000;j++)
-                dummy = 3;
-    }
-
-}
-void ProgB()
-{
-    while(1)
-    {
-        value = value - 1;
-        int i,j;
-        for( i = 0; i <150; i++)
-            for( j = 0; j <1000;j++)
-                dummy = 2;
-    }
-
-}
-
-int Factorial(int n)
-{
-    if (n == 1)
-        return 1;
-    return n * Factorial(n-1);
-}
-void ProgC()
-{
-    while(1)
-    {
-        Factorial(10);
-    }
-
-}
-
-
 int main(void) {
 
-    // activate the timer
-    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+    init();
 
     // step 1: Activate clock for the port
     SYSCTL_RCGCGPIO_R |= 0x22; // enable clock for PORT F and PORTB
