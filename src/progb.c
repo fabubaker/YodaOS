@@ -1,10 +1,10 @@
 #include <tasks.h>
 
-volatile int value = 0;
-volatile int dummy = 0;
+extern int value;
+extern int dummy; 
 
 void ProgB()
-{
+{ 
   while(1)
     {
       value = value - 1;

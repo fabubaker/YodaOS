@@ -7,6 +7,6 @@
 
 int os_init();
 int os_register_preempt();
-int os_register_non_preempt();
+int os_register_nonpreempt();
 
 #endif 

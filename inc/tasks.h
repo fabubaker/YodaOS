@@ -6,17 +6,17 @@
  * User defines these tasks elsewhere.
  */
 
-void progA();
-void progB();
-void progC();
+void ProgA();
+void ProgB();
+void ProgC();
 
 /* 
  * Non-preemptive tasks are declared below.
  * User defines these tasks elsewhere.
  */
 
-void nonA();
-void nonB();
-void nonC();
+void blink1();
+void blink3();
+void blink5();
 
 #endif

@@ -1,7 +1,7 @@
 #include <tasks.h>
 
-volatile int value = 0;
-volatile int dummy = 0;
+extern volatile int value;
+extern volatile int dummy;
 
 int Factorial(int n)
 {
