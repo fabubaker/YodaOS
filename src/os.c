@@ -120,14 +120,12 @@ void Timer5AInit()
 }
 
 /*
- * @brief   Initializes OS configuration.
+ * @brief   Kickstarts the OS.
  * @return  1 if successful, 0 if failed
  */
-int os_init()
+int os_start()
 { 
-  // Activate clock for the port
-  SYSCTL_RCGCGPIO_R |= 0x22; // enable clock for PORT F and PORTB
-
+  hw_init();
   Timer5AInit();
   bootstrapping = 1;
 

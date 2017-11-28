@@ -6,7 +6,7 @@
 #include <tasks.h>
 
 int main(void) {
-
+ 
   os_register_preempt(ProgA);
   os_register_preempt(ProgB);
   os_register_preempt(ProgC);
@@ -15,7 +15,7 @@ int main(void) {
   os_register_nonpreempt(&blink3, 3);
   os_register_nonpreempt(&blink5, 5);
 
-  os_init();
+  os_start();
   
   while(1);
   

@@ -14,6 +14,5 @@ void ProgB()
 	for( j = 0; j <1000;j++)
 	  dummy = 2;
     }
-
 }
 
