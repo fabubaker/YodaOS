@@ -45,9 +45,10 @@ struct TCB TCBs[4] = {
 #define MAX_PREEMPT 4     // Including non_preempt_block
 #define MAX_NON_PREEMPT 3
 
-// address of non-preemptive functions
+// non-preemptive functions' context
 void* non_preempt_tasks[MAX_NON_PREEMPT]; 
 int   non_preempt_times[MAX_NON_PREEMPT];
+uint64_t non_preempt_last_run[MAX_NON_PREEMPT] = {0};
 
 volatile unsigned int preempt_count = 1; // Since non_preempt is the first
 volatile unsigned int non_preempt_count = 0;
@@ -55,22 +56,33 @@ volatile unsigned int non_preempt_count = 0;
 volatile struct TCB* RunPtr = &TCBs[0];
 volatile int* StackPtr = 0;
 volatile char bootstrapping;
+volatile uint64_t curr_time = 0;
 
 /*
- * @brief Uses Systick Timer as a delay.
- * @param delay - Seconds to delay for. 
+ * @brief Delay functionality provided by OS.
+ *        Uses Systick Timer for millisecond delay.
+ * @param delay - Milliseconds to delay for. 
  */
-void delaySeconds(uint32_t delay)
+void os_delay_ms(uint64_t delay)
 {
-	int i = 0;
-	for (; i < delay; i++)
-	{
-	  NVIC_ST_RELOAD_R = 0x3D0900; // Delay for 1 second.
-	  NVIC_ST_CURRENT_R = 0;
-	  NVIC_ST_CTRL_R = 1;   // Use 16Mhz/4 PIOSC clock with no interrupts.
-	  NVIC_ST_RELOAD_R = 0; // Disable wrap-around during context-switch.
-	  while ((NVIC_ST_CTRL_R&0x00010000)==0){}
-	}
+	uint64_t start_time = curr_time;
+	while(((curr_time - start_time) >> 22) < delay);
+}
+
+/*
+ * @brief Increments curr_time according to
+ *        Systick counter.
+ */
+void SystickHandler()
+{
+	curr_time += 900719925;	
+}
+
+void SystickInit()
+{
+    NVIC_ST_RELOAD_R = 0x00FFFFFF;
+    NVIC_ST_CURRENT_R = 0;
+    NVIC_ST_CTRL_R = 0x7; // Interrupts with 80Mhz clock.
 }
 
 /* 
@@ -125,8 +137,15 @@ void Timer5AInit()
  */
 int os_start()
 { 
+  // initialize timers and ports.
   hw_init();
+
+  // init context switching timer.
   Timer5AInit();
+
+  // init Systick for global timer.
+  SystickInit();
+
   bootstrapping = 1;
 
   return 1;
@@ -173,10 +192,13 @@ void non_preempt_block()
     {
         int i = 0;
         for (; i < non_preempt_count; i++)
-	    {
-            delaySeconds(non_preempt_times[i]);
-            void (*task)(void) = non_preempt_tasks[i];
-            (*task)(); // Run the task till completion.
-	    }
+        {
+	  if (((curr_time - non_preempt_last_run[i]) >> 32) >= non_preempt_times[i])
+	  {
+		  non_preempt_last_run[i] = curr_time;
+		  void (*task)(void) = non_preempt_tasks[i];
+		  (*task)(); // Run the task till completion.
+	  }
+        }
     }
 }
