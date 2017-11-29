@@ -7,10 +7,9 @@
 
 int main(void) {
  
-   // activate internal clock.
-    SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
-
-
+  // activate internal clock.
+  SysCtlClockSet(SYSCTL_SYSDIV_2_5 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
+  
   os_register_preempt(ProgA);
   os_register_preempt(ProgB);
   os_register_preempt(ProgC);
