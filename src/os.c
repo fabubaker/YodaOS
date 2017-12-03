@@ -13,6 +13,7 @@
 #include <sysctl.h>
 #include <os.h>
 #include <tasks.h>
+#include <serial.h>
 
 struct TCB
 {
@@ -36,8 +37,8 @@ void non_preempt_block();
 // TCBs[0] is reserved for the non-preemptive block.
 struct TCB TCBs[4] = {
         {&TCBs[1],&TCBs[0].R0,0,{0},0,0,0,0,0,0,non_preempt_block,0x61000000},
-        {&TCBs[2],&TCBs[1].R0,1,{0},0,0,0,0,0,0,0                ,0x61000000},
         {&TCBs[3],&TCBs[2].R0,2,{0},0,0,0,0,0,0,0                ,0x61000000},
+        {&TCBs[2],&TCBs[1].R0,1,{0},0,0,0,0,0,0,0                ,0x61000000},
         {&TCBs[0],&TCBs[3].R0,3,{0},0,0,0,0,0,0,0                ,0x61000000}
 };
 
@@ -201,4 +202,41 @@ void non_preempt_block()
 	  }
         }
     }
+}
+
+/* 
+ * The hw_init function is run before the OS 
+ * is started. Use it to initialize hardware such as
+ * ports, timers, etc.
+ *
+ * User defines this elsewhere.
+ */
+
+void hw_init()
+{
+  /* Port A is reserved for serial writer */
+
+  // Activate clock for the port.
+  SYSCTL_RCGCGPIO_R |= 0x2A; // enable clock for PORT B,D,F.
+
+  // Unlock the pin.
+  GPIO_PORTB_LOCK_R = 0x4C4F434B;
+  GPIO_PORTD_LOCK_R = 0x4C4F434B;   
+  GPIO_PORTF_LOCK_R = 0x4C4F434B;
+
+  // Set commit register.
+  GPIO_PORTB_CR_R = 0xFF;
+  GPIO_PORTD_CR_R = 0xFF;
+  GPIO_PORTF_CR_R = 0xFF;
+
+  // Set direction for ports.
+  /* GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. */
+  /* GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. */
+  /* GPIO_PORTF_DIR_R = 0x00;    // Port  */
+
+  GPIO_PORTB_DEN_R = 0xFF;
+  GPIO_PORTD_DEN_R = 0xFF;
+  GPIO_PORTF_DEN_R = 0xFF;
+
+  SetupSerial();
 }

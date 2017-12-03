@@ -26,14 +26,5 @@ void blink1();
 void blink3();
 void blink5();
 
-/* 
- * The hw_init function is run before the OS 
- * is started. Use it to initialize hardware such as
- * ports, timers, etc.
- *
- * User defines this elsewhere.
- */
-
-void hw_init();
 
 #endif
