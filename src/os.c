@@ -60,6 +60,58 @@ volatile char bootstrapping;
 volatile uint64_t curr_time = 0;
 
 /*
+ * @brief   Kickstarts the OS.
+ * @return  1 if successful, 0 if failed
+ */
+int os_start()
+{ 
+  // initialize timers and ports.
+  hw_init();
+
+  // init context switching timer.
+  Timer5AInit();
+
+  // init Systick for global timer.
+  SystickInit();
+
+  bootstrapping = 1;
+
+  return 1;
+}
+
+/* 
+ * @brief       Registers preemptive task with OS.
+ * @param task  Premptive Task to register with OS. 
+ * @return      1 if successful, 0 if failed.
+ */ 
+int os_register_preempt(void (*task)(void))
+{
+  if (preempt_count >= MAX_PREEMPT)
+      return 0; // At max limit    
+
+  TCBs[preempt_count].InitPC = task;
+  preempt_count += 1;
+  return 1;
+}
+
+/*
+ * @brief       Registers non-preemptive task with OS.
+ * @param task  Non-Premptive Task to register with OS.
+ * @param time  Run this task every 'time' seconds.
+ * @return      1 if successful, 0 if failed.
+ */
+int os_register_nonpreempt(void (*task)(void), int time)
+{
+  if (non_preempt_count >= MAX_NON_PREEMPT)
+    return 0; // At max limit
+
+  non_preempt_tasks[non_preempt_count] = task;
+  non_preempt_times[non_preempt_count]  = time;
+  non_preempt_count += 1;
+  return 1;
+}
+
+/*
  * @brief Delay functionality provided by OS.
  *        Uses Systick Timer for millisecond delay.
  * @param delay - Milliseconds to delay for. 
@@ -68,6 +120,42 @@ void os_delay_ms(uint64_t delay)
 {
 	uint64_t start_time = curr_time;
 	while(((curr_time - start_time) >> 22) < delay);
+}
+
+/* 
+ * The hw_init function is run before the OS 
+ * is started. Use it to initialize hardware such as
+ * ports, timers, etc.
+ *
+ * User defines this elsewhere.
+ */
+void hw_init()
+{
+  /* Port A is reserved for serial writer */
+
+  // Activate clock for the port.
+  SYSCTL_RCGCGPIO_R |= 0x2A; // enable clock for PORT B,D,F.
+
+  // Unlock the pin.
+  GPIO_PORTB_LOCK_R = 0x4C4F434B;
+  GPIO_PORTD_LOCK_R = 0x4C4F434B;   
+  GPIO_PORTF_LOCK_R = 0x4C4F434B;
+
+  // Set commit register.
+  GPIO_PORTB_CR_R = 0xFF;
+  GPIO_PORTD_CR_R = 0xFF;
+  GPIO_PORTF_CR_R = 0xFF;
+
+  // Set direction for ports.
+  /* GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. */
+  /* GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. */
+  /* GPIO_PORTF_DIR_R = 0x00;    // Port  */
+
+  GPIO_PORTB_DEN_R = 0xFF;
+  GPIO_PORTD_DEN_R = 0xFF;
+  GPIO_PORTF_DEN_R = 0xFF;
+
+  SetupSerial();
 }
 
 /*
@@ -130,59 +218,7 @@ void Timer5AInit()
     NVIC_EN0_R = 1<<23;
     TIMER5_CTL_R = 0x00000001;
     IntEnable(INT_TIMER5A);
-}
-
-/*
- * @brief   Kickstarts the OS.
- * @return  1 if successful, 0 if failed
- */
-int os_start()
-{ 
-  // initialize timers and ports.
-  hw_init();
-
-  // init context switching timer.
-  Timer5AInit();
-
-  // init Systick for global timer.
-  SystickInit();
-
-  bootstrapping = 1;
-
-  return 1;
-}
-
-/* 
- * @brief       Registers preemptive task with OS.
- * @param task  Premptive Task to register with OS. 
- * @return      1 if successful, 0 if failed.
- */ 
-int os_register_preempt(void (*task)(void))
-{
-  if (preempt_count >= MAX_PREEMPT)
-      return 0; // At max limit    
-
-  TCBs[preempt_count].InitPC = task;
-  preempt_count += 1;
-  return 1;
-}
-
-/*
- * @brief       Registers non-preemptive task with OS.
- * @param task  Non-Premptive Task to register with OS.
- * @param time  Run this task every 'time' seconds.
- * @return      1 if successful, 0 if failed.
- */
-int os_register_nonpreempt(void (*task)(void), int time)
-{
-  if (non_preempt_count >= MAX_NON_PREEMPT)
-    return 0; // At max limit
-
-  non_preempt_tasks[non_preempt_count] = task;
-  non_preempt_times[non_preempt_count]  = time;
-  non_preempt_count += 1;
-  return 1;
-}
+} 
 
 /*
  * @brief    Contains block of code that runs non-preemptive tasks.
@@ -204,39 +240,3 @@ void non_preempt_block()
     }
 }
 
-/* 
- * The hw_init function is run before the OS 
- * is started. Use it to initialize hardware such as
- * ports, timers, etc.
- *
- * User defines this elsewhere.
- */
-
-void hw_init()
-{
-  /* Port A is reserved for serial writer */
-
-  // Activate clock for the port.
-  SYSCTL_RCGCGPIO_R |= 0x2A; // enable clock for PORT B,D,F.
-
-  // Unlock the pin.
-  GPIO_PORTB_LOCK_R = 0x4C4F434B;
-  GPIO_PORTD_LOCK_R = 0x4C4F434B;   
-  GPIO_PORTF_LOCK_R = 0x4C4F434B;
-
-  // Set commit register.
-  GPIO_PORTB_CR_R = 0xFF;
-  GPIO_PORTD_CR_R = 0xFF;
-  GPIO_PORTF_CR_R = 0xFF;
-
-  // Set direction for ports.
-  /* GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. */
-  /* GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. */
-  /* GPIO_PORTF_DIR_R = 0x00;    // Port  */
-
-  GPIO_PORTB_DEN_R = 0xFF;
-  GPIO_PORTD_DEN_R = 0xFF;
-  GPIO_PORTF_DEN_R = 0xFF;
-
-  SetupSerial();
-}
