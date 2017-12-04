@@ -122,12 +122,42 @@ void os_delay_ms(uint64_t delay)
 	while(((curr_time - start_time) >> 22) < delay);
 }
 
+/* @brief Locks the global semaphore 
+ *
+ * @param flag to toggle
+ *
+ * @retval 1 if flag acquired
+ *         0 if failed
+ */
+int  os_lock(int flag)
+{
+	int retval = 0;
+	
+	IntDisable(INT_TIMER5A);
+	if(flag) // lock is free
+	{
+		flag   =  0;
+		retval =  1;
+	}
+	else
+		retval = 0;
+
+	IntEnable(INT_TIMER5A);
+	return retval;
+}
+
+/* Unlocks the global semaphore */
+void os_unlock(int flag)
+{
+	flag = 1;
+}
+
 /* 
  * The hw_init function is run before the OS 
  * is started. Use it to initialize hardware such as
  * ports, timers, etc.
  *
- * User defines this elsewhere.
+ * For user to define appropriately.
  */
 void hw_init()
 {
