@@ -181,10 +181,15 @@ void hw_init()
   GPIO_PORTF_CR_R = 0xFF;
 
   // Set direction for ports.
-  /* GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. */
-  /* GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. */
-  /* GPIO_PORTF_DIR_R = 0x00;    // Port  */
 
+  // Direction for keypad.
+  GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. 
+  GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. 
+
+  // Direction for LED loop 1
+
+  // Direction for LED loop 2
+  
   GPIO_PORTB_DEN_R = 0xFF;
   GPIO_PORTD_DEN_R = 0xFF;
   GPIO_PORTF_DEN_R = 0xFF;
