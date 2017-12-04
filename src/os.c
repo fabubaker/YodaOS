@@ -124,7 +124,7 @@ void os_delay_ms(uint64_t delay)
 
 /* @brief Locks the global semaphore 
  *
- * @param flag to toggle
+ * @param flag - semaphore to toggle
  *
  * @retval 1 if flag acquired
  *         0 if failed
@@ -140,13 +140,17 @@ int  os_lock(int flag)
 		retval =  1;
 	}
 	else
-		retval = 0;
+	        retval = 0;
 
 	IntEnable(INT_TIMER5A);
 	return retval;
 }
 
-/* Unlocks the global semaphore */
+/* 
+ * @brief Unlocks the global semaphore 
+ * 
+ * @param flag - semaphore to toggle
+ */
 void os_unlock(int flag)
 {
 	flag = 1;
