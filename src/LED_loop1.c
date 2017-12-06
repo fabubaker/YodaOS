@@ -55,6 +55,7 @@ void ProgB()
 		  if (priority)
 		  {
 			  // Unlock semaphore
+			  os_unlock();
 			  priority = 0;
 			  GPIO_PORTE_DATA_R = 0x0;
 		  }			 		      
@@ -65,7 +66,8 @@ void ProgB()
 		  if (!priority)
 		  {
 			  // Lock semaphore
-			  // priority = 1
+			  while(!os_lock());
+			  priority = 1;
 		  }
 		  
 		  GPIO_PORTE_DATA_R = 0x2;
