@@ -35,7 +35,7 @@ void non_preempt_block();
 
 // pre-emptive tasks
 // TCBs[0] is reserved for the non-preemptive block.
-volatile struct TCB TCBs[4] = {
+struct TCB TCBs[4] = {
         {&TCBs[1],&TCBs[0].R0,0,{0},0,0,0,0,0,0,non_preempt_block,0x61000000},
         {&TCBs[2],&TCBs[1].R0,2,{0},0,0,0,0,0,0,0                ,0x61000000},
         {&TCBs[3],&TCBs[2].R0,1,{0},0,0,0,0,0,0,0                ,0x61000000},
@@ -58,6 +58,8 @@ volatile struct TCB* RunPtr = &TCBs[0];
 volatile int* StackPtr = 0;
 volatile char bootstrapping;
 volatile uint64_t curr_time = 0;
+
+static int flag = 1;
 
 /*
  * @brief   Kickstarts the OS.
@@ -124,12 +126,10 @@ void os_delay_ms(uint64_t delay)
 
 /* @brief Locks the global semaphore 
  *
- * @param flag - semaphore to toggle
- *
  * @retval 1 if flag acquired
  *         0 if failed
  */
-int  os_lock(int flag)
+int  os_lock()
 {
 	int retval = 0;
 	
@@ -151,7 +151,7 @@ int  os_lock(int flag)
  * 
  * @param flag - semaphore to toggle
  */
-void os_unlock(int flag)
+void os_unlock()
 {
 	flag = 1;
 }
@@ -168,32 +168,37 @@ void hw_init()
   /* Port A is reserved for serial writer */
 
   // Activate clock for the port.
-  SYSCTL_RCGCGPIO_R |= 0x2A; // enable clock for PORT B,D,F.
+  SYSCTL_RCGCGPIO_R |= 0x3E; // enable clock for PORT B,C,D,E,F.
 
   // Unlock the pin.
   GPIO_PORTB_LOCK_R = 0x4C4F434B;
-  GPIO_PORTD_LOCK_R = 0x4C4F434B;   
+  GPIO_PORTC_LOCK_R = 0x4C4F434B;
+  GPIO_PORTD_LOCK_R = 0x4C4F434B;
+  GPIO_PORTE_LOCK_R = 0x4C4F434B;
   GPIO_PORTF_LOCK_R = 0x4C4F434B;
 
   // Set commit register.
   GPIO_PORTB_CR_R = 0xFF;
+  GPIO_PORTC_CR_R = 0xFF;
   GPIO_PORTD_CR_R = 0xFF;
+  GPIO_PORTE_CR_R = 0xFF;
   GPIO_PORTF_CR_R = 0xFF;
 
   // Set direction for ports.
 
   // Direction for keypad.
   GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. 
+  GPIO_PORTC_DIR_R = 0xC0;    // Port C6, C7 are non-preemptive LEDs.
   GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. 
-  // Port E1 E2 E3 E4 are for LEDs
-  // Port C6 and C7 are for buttons.
+  GPIO_PORTE_DIR_R = 0x1E;    // Port E1 E2 E3 E4 are for preemptive LEDs (output).
+  GPIO_PORTF_DIR_R = 0x02;    // Port F0 and F4 are inputs (buttons). F1 is output (onboard LED).
   
-  // Direction for LED loop 1
-
-  // Direction for LED loop 2
+  GPIO_PORTF_PUR_R = 0x11;    // Enable PUR for F0 and F4.
   
   GPIO_PORTB_DEN_R = 0xFF;
+  GPIO_PORTC_DEN_R = 0xFF;
   GPIO_PORTD_DEN_R = 0xFF;
+  GPIO_PORTE_DEN_R = 0xFF;
   GPIO_PORTF_DEN_R = 0xFF;
 
   SetupSerial();

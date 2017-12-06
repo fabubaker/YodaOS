@@ -12,11 +12,8 @@ int  os_register_nonpreempt();
 void os_delay_ms(uint64_t delay);
 
 /* Semaphore functions */
-// flag == 1 means resource is free to use.
-static int flag = 1; 
-
-int  os_lock  (int flag);
-void os_unlock(int flag);
+int  os_lock  ();
+void os_unlock();
 
 /* User defined HW initializer */
 void hw_init();
