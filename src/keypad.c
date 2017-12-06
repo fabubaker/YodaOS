@@ -207,7 +207,7 @@ char get_output(int out)
   return ret;
 }
 
-int keypad_loop(void) {
+void ProgA(void) {
   STyp *pt;
   int input;
   int output;
