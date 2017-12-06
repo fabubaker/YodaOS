@@ -35,10 +35,10 @@ void non_preempt_block();
 
 // pre-emptive tasks
 // TCBs[0] is reserved for the non-preemptive block.
-struct TCB TCBs[4] = {
+volatile struct TCB TCBs[4] = {
         {&TCBs[1],&TCBs[0].R0,0,{0},0,0,0,0,0,0,non_preempt_block,0x61000000},
-        {&TCBs[3],&TCBs[2].R0,2,{0},0,0,0,0,0,0,0                ,0x61000000},
-        {&TCBs[2],&TCBs[1].R0,1,{0},0,0,0,0,0,0,0                ,0x61000000},
+        {&TCBs[2],&TCBs[1].R0,2,{0},0,0,0,0,0,0,0                ,0x61000000},
+        {&TCBs[3],&TCBs[2].R0,1,{0},0,0,0,0,0,0,0                ,0x61000000},
         {&TCBs[0],&TCBs[3].R0,3,{0},0,0,0,0,0,0,0                ,0x61000000}
 };
 
@@ -185,7 +185,9 @@ void hw_init()
   // Direction for keypad.
   GPIO_PORTB_DIR_R = 0x0F;    // Port B0-3 are output. 
   GPIO_PORTD_DIR_R = 0x00;    // Port D0-3 are input. 
-
+  // Port E1 E2 E3 E4 are for LEDs
+  // Port C6 and C7 are for buttons.
+  
   // Direction for LED loop 1
 
   // Direction for LED loop 2
